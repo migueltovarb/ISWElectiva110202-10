@@ -19,7 +19,8 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, username, password=None, **extra_fields):
-        return self.create_user(username, password, rol='admin', **extra_fields)
+        extra_fields.setdefault('rol', 'admin')
+        return self.create_user(username, password, **extra_fields)
 
 class User(AbstractUser):
     ROLES = [('admin', 'Administrador'), ('profesor', 'Profesor'), ('estudiante', 'Estudiante')]
