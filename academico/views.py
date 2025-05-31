@@ -365,7 +365,21 @@ def informes_rendimiento(request):
                     calificaciones_grupo = Calificacion.objects.none()
             informe_grupal = True
             if calificaciones_grupo.exists():
-                promedio_grupal = calificaciones_grupo.aggregate(Avg('nota'))['nota__avg']
+                # Agrupar por estudiante y sumar sus notas (nota definitiva por estudiante)
+                from django.db.models import Sum
+                # Calcular nota definitiva por estudiante en Python puro
+                estudiantes_ids = [eid for eid in calificaciones_grupo.values_list('estudiante', flat=True).distinct() if eid is not None]
+                notas_definitivas = []
+                for estudiante_id in estudiantes_ids:
+                    notas_estudiante = list(calificaciones_grupo.filter(estudiante_id=estudiante_id).values_list('nota', flat=True))
+                    notas_estudiante = [n for n in notas_estudiante if n is not None]
+                    if notas_estudiante:
+                        suma = sum(notas_estudiante)
+                        notas_definitivas.append(suma)
+                if notas_definitivas:
+                    promedio_grupal = sum(notas_definitivas) / len(notas_definitivas)
+                else:
+                    promedio_grupal = None
             else:
                 promedio_grupal = None
         except Asignatura.DoesNotExist:
