@@ -48,86 +48,38 @@
                     <div class="mt-6">
                         <h3 class="text-xl font-semibold mb-4">Resultados del Informe Individual</h3>
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="flex justify-end mb-4">
-                                <a href="{% url 'exportar_pdf_individual' estudiante_id=request.GET.estudiante %}" class="bg-red-500 text-white px-4 py-2 rounded mr-2 hover:bg-red-600 transition">
-                                    <i class="fas fa-file-pdf mr-2"></i>Exportar PDF
-                                </a>
-                                <a href="{% url 'exportar_excel_individual' estudiante_id=request.GET.estudiante %}" class="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600 transition">
-                                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
-                                </a>
-                                <a href="#" onclick="mostrarPrevisualizacionIndividual(event)" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
-                                    <i class="fas fa-eye mr-2"></i>Previsualizar
-                                </a>
-                            </div> <!-- Aquí termina el div de los botones -->
-                            
-                            <div id="previsualizacion-individual" class="hidden mt-4">
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="text-lg font-semibold mb-2">Resumen de Previsualización</h4>
-                                    <p class="mb-2"><strong>Estudiante:</strong> {{ estudiante_seleccionado.user.get_full_name|default:estudiante_seleccionado.user.username }}</p>
-                                    <p class="mb-2"><strong>Período:</strong> {{ periodo_seleccionado|default:"Todos" }}</p>
-                                    <p class="mb-4"><strong>Promedio General:</strong> {{ promedio_general|floatformat:2 }}</p>
-                                    <div class="overflow-x-auto">
-                                        <table class="min-w-full divide-y divide-gray-200">
-                                            <thead class="bg-gray-100">
-                                                <tr>
-                                                    <th class="px-4 py-2 text-left">Asignatura</th>
-                                                    <th class="px-4 py-2 text-left">Período</th>
-                                                    <th class="px-4 py-2 text-left">Calificación</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for calificacion in calificaciones_estudiante %}
-                                                    <tr class="hover:bg-gray-50">
-                                                        <td class="px-4 py-2">{{ calificacion.asignatura.nombre }}</td>
-                                                        <td class="px-4 py-2">{{ calificacion.periodo.nombre }}</td>
-                                                        <td class="px-4 py-2">{{ calificacion.nota|floatformat:2 }}</td>
-                                                    </tr>
-                                                {% empty %}
-                                                    <tr>
-                                                        <td colspan="3" class="px-4 py-4 text-center text-gray-500">No hay calificaciones registradas</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <script>
-                            function mostrarPrevisualizacionIndividual(event) {
-                                event.preventDefault();
-                                var preview = document.getElementById('previsualizacion-individual');
-                                if (preview.classList.contains('hidden')) {
-                                    preview.classList.remove('hidden');
-                                    preview.scrollIntoView({behavior: 'smooth'});
-                                } else {
-                                    preview.classList.add('hidden');
-                                }
-                            }
-                            </script>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-100">
-                                        <tr>
-                                            <th class="px-4 py-2 text-left">Asignatura</th>
-                                            <th class="px-4 py-2 text-left">Período</th>
-                                            <th class="px-4 py-2 text-left">Calificación</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for calificacion in calificaciones_estudiante %}
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-4 py-2">{{ calificacion.asignatura.nombre }}</td>
-                                                <td class="px-4 py-2">{{ calificacion.periodo.nombre }}</td>
-                                                <td class="px-4 py-2">{{ calificacion.nota|floatformat:2 }}</td>
-                                            </tr>
-                                        {% empty %}
+                            <h4 class="text-lg font-semibold mb-2">Resumen de Previsualización</h4>
+                            <p class="mb-2"><strong>Estudiante:</strong> {{ estudiante_seleccionado.user.get_full_name|default:estudiante_seleccionado.user.username }}</p>
+                            <p class="mb-2"><strong>Período:</strong> {{ periodo_seleccionado|default:"Todos" }}</p>
+                            {% if calificaciones_estudiante and calificaciones_estudiante|length > 0 %}
+                                <p class="mb-4"><strong>Promedio General:</strong> {{ promedio_general|floatformat:2 }}</p>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-100">
                                             <tr>
-                                                <td colspan="3" class="px-4 py-4 text-center text-gray-500">No hay calificaciones registradas</td>
+                                                <th class="px-4 py-2 text-left">Asignatura</th>
+                                                <th class="px-4 py-2 text-left">Período</th>
+                                                <th class="px-4 py-2 text-left">Calificación</th>
                                             </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody>
+                                            {% for calificacion in calificaciones_estudiante %}
+                                                <tr class="hover:bg-gray-50">
+                                                    <td class="px-4 py-2">{{ calificacion.asignatura.nombre }}</td>
+                                                    <td class="px-4 py-2">{{ calificacion.periodo.nombre }}</td>
+                                                    <td class="px-4 py-2">{{ calificacion.nota|floatformat:2 }}</td>
+                                                </tr>
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="3" class="px-4 py-4 text-center text-gray-500">No hay calificaciones registradas</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="mb-4 text-red-500"><strong>No existen calificaciones aún para este estudiante.</strong></p>
+                            {% endif %}
                         </div>
                     </div>
                 {% endif %}
@@ -175,24 +127,13 @@
                     <div class="mt-6">
                         <h3 class="text-xl font-semibold mb-4">Resultados del Informe Grupal</h3>
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="flex justify-end mb-4">
-                                <a href="{% url 'exportar_pdf_grupal' asignatura_id=request.GET.asignatura %}" class="bg-red-500 text-white px-4 py-2 rounded mr-2 hover:bg-red-600 transition">
-                                    <i class="fas fa-file-pdf mr-2"></i>Exportar PDF
-                                </a>
-                                <a href="{% url 'exportar_excel_grupal' asignatura_id=request.GET.asignatura %}" class="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600 transition">
-                                    <i class="fas fa-file-excel mr-2"></i>Exportar Excel
-                                </a>
-                                <button type="button" onclick="document.getElementById('grupal-preview').scrollIntoView({behavior: 'smooth'});" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
-                                    <i class="fas fa-eye mr-2"></i>Previsualizar
-                                </button>
-                            </div>
                             <p class="mb-2"><strong>Asignatura:</strong> {{ asignatura_seleccionada.nombre }}</p>
-                            <p class="mb-4"><strong>Promedio General del Grupo:</strong> {{ promedio_grupal|floatformat:2 }}</p>
-                            
-                            <div class="overflow-x-auto">
+                            <p class="mb-4"><strong>Promedio General del Grupo:</strong> {% if promedio_grupal is not None %}{{ promedio_grupal|floatformat:2 }}{% else %}<span class="text-red-500">No hay datos</span>{% endif %}</p>
+                            <div class="overflow-x-auto mt-4">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-100">
                                         <tr>
+                                            <th class="px-4 py-2 text-left">#</th>
                                             <th class="px-4 py-2 text-left">Estudiante</th>
                                             <th class="px-4 py-2 text-left">Período</th>
                                             <th class="px-4 py-2 text-left">Calificación</th>
@@ -201,13 +142,14 @@
                                     <tbody>
                                         {% for calificacion in calificaciones_grupo %}
                                             <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-2">{{ forloop.counter }}</td>
                                                 <td class="px-4 py-2">{{ calificacion.estudiante.user.get_full_name|default:calificacion.estudiante.user.username }}</td>
                                                 <td class="px-4 py-2">{{ calificacion.periodo.nombre }}</td>
                                                 <td class="px-4 py-2">{{ calificacion.nota|floatformat:2 }}</td>
                                             </tr>
                                         {% empty %}
                                             <tr>
-                                                <td colspan="3" class="px-4 py-4 text-center text-gray-500">No hay calificaciones registradas para este grupo</td>
+                                                <td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay calificaciones registradas para este grupo</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
@@ -269,36 +211,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<script>
-    // Verificar si los elementos existen
-    console.log('URL Params:', Object.fromEntries(urlParams.entries()));
-    console.log('Individual Content Visible:', !document.getElementById('individual-content')?.classList.contains('hidden'));
-    console.log('Grupal Content Visible:', !document.getElementById('grupal-content')?.classList.contains('hidden'));
-    console.log('Elemento individual-content:', document.getElementById('individual-content'));
-    console.log('Elemento grupal-content:', document.getElementById('grupal-content'));
-    
-    // Verificar las variables de contexto
-    console.log('Informe individual:', {{ informe_individual|yesno:"true,false" }});
-    console.log('Informe grupal:', {{ informe_grupal|yesno:"true,false" }});
-</script>
 {% endblock %}
-<div id="individual-preview">
-    <!-- Aquí va el contenido de la previsualización del informe individual -->
-</div>
-<script>
-function mostrarPrevisualizacionIndividual(event) {
-    event.preventDefault();
-    var preview = document.getElementById('previsualizacion-individual');
-    if (preview.classList.contains('hidden')) {
-        preview.classList.remove('hidden');
-        preview.scrollIntoView({behavior: 'smooth'});
-    } else {
-        preview.classList.add('hidden');
-    }
-}
-</script>
-<div id="grupal-preview">
-    <!-- Aquí va el contenido de la previsualización del informe grupal -->
-</div>
-{% endblock %}
-

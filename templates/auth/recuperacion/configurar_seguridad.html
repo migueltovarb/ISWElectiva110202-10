@@ -12,10 +12,6 @@
                 </div>
                 <p class="subtitle">Configura tu pregunta de seguridad para proteger tu cuenta</p>
             </div>
-    <!-- Librería para PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Librería para Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
 </head>
     <div class="recovery-body">
         {% if messages %}
@@ -91,17 +87,6 @@
     <div class="recovery-footer">
         <p><i class="fas fa-lock"></i> Tu seguridad es nuestra prioridad</p>
     </div>
-    </div>
-</div>
-
-<div class="recovery-body">
-    <div class="export-buttons">
-        <button class="export-btn pdf-btn" onclick="exportarPDF()">
-            <i class="fas fa-file-pdf"></i> Exportar a PDF
-        </button>
-        <button class="export-btn excel-btn" onclick="exportarExcel()">
-            <i class="fas fa-file-excel"></i> Exportar a Excel
-        </button>
     </div>
 </div>
 
@@ -339,57 +324,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 {% endblock %}
-
-function exportarPDF() {
-    // Verificar si hay datos seleccionados
-    const seleccion = document.querySelector('input[name="tipo_seleccion"]:checked');
-    if (!seleccion) {
-        alert('Por favor seleccione estudiante o grupo de asignatura');
-        return;
-    }
-
-    // Obtener los datos según la selección
-    const tipo = seleccion.value;
-    const datos = obtenerDatosSeleccionados(tipo);
-
-    // Crear el PDF usando jsPDF
-    const doc = new jsPDF();
-    doc.text('Reporte de Seguridad', 20, 20);
-    
-    // Agregar datos al PDF
-    let y = 40;
-    datos.forEach(item => {
-        doc.text(item.toString(), 20, y);
-        y += 10;
-    });
-
-    // Guardar el PDF
-    doc.save('reporte_seguridad.pdf');
-}
-
-function exportarExcel() {
-    // Verificar si hay datos seleccionados
-    const seleccion = document.querySelector('input[name="tipo_seleccion"]:checked');
-    if (!seleccion) {
-        alert('Por favor seleccione estudiante o grupo de asignatura');
-        return;
-    }
-
-    // Obtener los datos según la selección
-    const tipo = seleccion.value;
-    const datos = obtenerDatosSeleccionados(tipo);
-
-    // Crear el workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(datos);
-    XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
-
-    // Guardar el archivo
-    XLSX.writeFile(wb, 'reporte_seguridad.xlsx');
-}
-
-function obtenerDatosSeleccionados(tipo) {
-    // Esta función debe implementarse según tu estructura de datos
-    // Retorna un array con los datos seleccionados
-    return [];
-}

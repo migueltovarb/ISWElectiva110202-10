@@ -77,12 +77,19 @@ def configurar_seguridad(request):
     return render(request, 'academico/configurar_seguridad.html', {'form': form})
 
 def redirect_to_dashboard(user):
-    if user.rol == 'profesor':
+    """
+    Redirige automáticamente al dashboard correspondiente según el rol del usuario.
+    Si el usuario no tiene un rol válido, lo redirige al login.
+    """
+    from django.shortcuts import redirect
+    rol = getattr(user, 'rol', None)
+    if rol == 'profesor':
         return redirect('lista_calificaciones')
-    elif user.rol == 'estudiante':
+    elif rol == 'estudiante':
         return redirect('calificaciones_estudiante')
-    elif user.rol == 'admin':
+    elif rol == 'admin':
         return redirect('informes_rendimiento')
+    # Si el rol no es reconocido o no existe, redirigir al login
     return redirect('login')
 
 # Password Recovery Views
@@ -333,16 +340,38 @@ def informes_rendimiento(request):
             estudiante_seleccionado = Estudiante.objects.get(id=estudiante_seleccionado_id)
             calificaciones_estudiante = calificaciones.filter(estudiante_id=estudiante_seleccionado_id)
             informe_individual = True
+            if calificaciones_estudiante.exists():
+                promedio_general = calificaciones_estudiante.aggregate(Avg('nota'))['nota__avg']
+            else:
+                promedio_general = None
         except Estudiante.DoesNotExist:
             calificaciones_estudiante = None
+            promedio_general = None
             informe_individual = False
+    calificaciones_grupo = Calificacion.objects.none()
+    promedio_grupal = None
+    informe_grupal = False
     if asignatura_seleccionada_id:
         try:
             asignatura_seleccionada = Asignatura.objects.get(id=asignatura_seleccionada_id)
-            calificaciones_grupo = calificaciones.filter(asignatura_id=asignatura_seleccionada_id)
+            # Construir el queryset de calificaciones_grupo de forma independiente
+            calificaciones_grupo = Calificacion.objects.filter(asignatura_id=asignatura_seleccionada_id)
+            periodo_grupal = request.GET.get('periodo_grupal')
+            if periodo_grupal and periodo_grupal.strip():
+                try:
+                    periodo_id = int(periodo_grupal)
+                    calificaciones_grupo = calificaciones_grupo.filter(periodo_id=periodo_id)
+                except (ValueError, TypeError):
+                    calificaciones_grupo = Calificacion.objects.none()
             informe_grupal = True
+            if calificaciones_grupo.exists():
+                promedio_grupal = calificaciones_grupo.aggregate(Avg('nota'))['nota__avg']
+            else:
+                promedio_grupal = None
         except Asignatura.DoesNotExist:
-            calificaciones_grupo = None
+            asignatura_seleccionada = None
+            calificaciones_grupo = Calificacion.objects.none()
+            promedio_grupal = None
             informe_grupal = False
     total_estudiantes = calificaciones.values('estudiante').distinct().count()
     promedio_general = calificaciones.aggregate(Avg('nota'))['nota__avg'] or 0
@@ -358,7 +387,8 @@ def informes_rendimiento(request):
         'calificaciones_estudiante': calificaciones_estudiante,
         'calificaciones_grupo': calificaciones_grupo,
         'informe_individual': informe_individual and calificaciones_estudiante is not None,
-        'informe_grupal': informe_grupal and calificaciones_grupo is not None,
+        # Mostrar informe_grupal si el usuario ha filtrado por asignatura (aunque no haya resultados)
+        'informe_grupal': bool(asignatura_seleccionada_id),
         'total_estudiantes': total_estudiantes,
         'promedio_general': round(promedio_general, 2),
         'aprobados': aprobados,
@@ -366,103 +396,6 @@ def informes_rendimiento(request):
     }
     return render(request, 'academico/informes/informes_rendimiento.html', context)
 
-@login_required
-def exportar_pdf_individual(request, estudiante_id):
-    try:
-        estudiante = get_object_or_404(Estudiante, id=estudiante_id)
-        calificaciones = Calificacion.objects.filter(estudiante=estudiante).select_related('asignatura', 'periodo')
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=letter)
-        p.setFont("Helvetica", 12)
-        p.drawString(100, 750, f"Informe de Calificaciones - {estudiante.user.get_full_name()}")
-        y = 700
-        for calificacion in calificaciones:
-            texto = f"{calificacion.asignatura.nombre}: {calificacion.nota:.2f}"
-            p.drawString(100, y, texto)
-            y -= 20
-        p.showPage()
-        p.save()
-        buffer.seek(0)
-        response = HttpResponse(buffer, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename=informe_{estudiante.user.username}.pdf'
-        return response
-    except Exception as e:
-        messages.error(request, f"Error al generar el PDF: {str(e)}")
-        return redirect('informes_rendimiento')
-
-@login_required
-def exportar_excel_individual(request, estudiante_id):
-    try:
-        estudiante = get_object_or_404(Estudiante, id=estudiante_id)
-        calificaciones = Calificacion.objects.filter(estudiante=estudiante).select_related('asignatura', 'periodo')
-        output = BytesIO()
-        workbook = xlsxwriter.Workbook(output)
-        worksheet = workbook.add_worksheet()
-        header_format = workbook.add_format({'bold': True, 'bg_color': '#4B5563', 'font_color': 'white'})
-        headers = ['Asignatura', 'Período', 'Nota']
-        for col, header in enumerate(headers):
-            worksheet.write(0, col, header, header_format)
-        for row, calificacion in enumerate(calificaciones, start=1):
-            worksheet.write(row, 0, calificacion.asignatura.nombre)
-            worksheet.write(row, 1, calificacion.periodo.nombre)
-            worksheet.write(row, 2, float(calificacion.nota))
-        workbook.close()
-        output.seek(0)
-        response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename=calificaciones_{estudiante.user.username}.xlsx'
-        return response
-    except Exception as e:
-        messages.error(request, f"Error al generar el Excel: {str(e)}")
-        return redirect('informes_rendimiento')
-
-@login_required
-def exportar_pdf_grupal(request, asignatura_id):
-    try:
-        asignatura = get_object_or_404(Asignatura, id=asignatura_id)
-        calificaciones = Calificacion.objects.filter(asignatura=asignatura).select_related('estudiante__user')
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=letter)
-        p.setFont("Helvetica", 12)
-        p.drawString(100, 750, f"Informe Grupal - {asignatura.nombre}")
-        y = 700
-        for calificacion in calificaciones:
-            texto = f"{calificacion.estudiante.user.get_full_name()}: {calificacion.nota:.2f}"
-            p.drawString(100, y, texto)
-            y -= 20
-        p.showPage()
-        p.save()
-        buffer.seek(0)
-        response = HttpResponse(buffer, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename=informe_grupal_{asignatura.nombre}.pdf'
-        return response
-    except Exception as e:
-        messages.error(request, f"Error al generar el PDF grupal: {str(e)}")
-        return redirect('informes_rendimiento')
-
-@login_required
-def exportar_excel_grupal(request, asignatura_id):
-    try:
-        asignatura = get_object_or_404(Asignatura, id=asignatura_id)
-        calificaciones = Calificacion.objects.filter(asignatura=asignatura).select_related('estudiante__user', 'periodo')
-        output = BytesIO()
-        workbook = xlsxwriter.Workbook(output)
-        worksheet = workbook.add_worksheet()
-        header_format = workbook.add_format({'bold': True, 'bg_color': '#4B5563', 'font_color': 'white'})
-        headers = ['Estudiante', 'Período', 'Nota']
-        for col, header in enumerate(headers):
-            worksheet.write(0, col, header, header_format)
-        for row, calificacion in enumerate(calificaciones, start=1):
-            worksheet.write(row, 0, calificacion.estudiante.user.get_full_name())
-            worksheet.write(row, 1, calificacion.periodo.nombre)
-            worksheet.write(row, 2, float(calificacion.nota))
-        workbook.close()
-        output.seek(0)
-        response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename=calificaciones_grupo_{asignatura.nombre}.xlsx'
-        return response
-    except Exception as e:
-        messages.error(request, f"Error al generar el Excel grupal: {str(e)}")
-        return redirect('informes_rendimiento')
 
 def tu_vista(request):
     # Add your view logic here

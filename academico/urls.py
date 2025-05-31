@@ -15,11 +15,7 @@ urlpatterns = [
     # Ruta para configurar la seguridad
     path('configurar-seguridad/', views.configurar_seguridad, name='configurar_seguridad'),
     path('profesor/calificaciones/', views.lista_calificaciones, name='lista_calificaciones'),
-    path('exportar-pdf-individual/<int:estudiante_id>/', views.exportar_pdf_individual, name='exportar_pdf_individual'),
-    path('exportar-excel-individual/<int:estudiante_id>/', views.exportar_excel_individual, name='exportar_excel_individual'),
-    path('exportar-pdf-grupal/<int:asignatura_id>/', views.exportar_pdf_grupal, name='exportar_pdf_grupal'),
-    path('exportar-excel-grupal/<int:asignatura_id>/', views.exportar_excel_grupal, name='exportar_excel_grupal'),
-    path('asignatura/crear/', CrearAsignaturaView.as_view(), name='crear_asignatura'),
+        path('asignatura/crear/', CrearAsignaturaView.as_view(), name='crear_asignatura'),
     path('calificacion/crear/', CrearCalificacionView.as_view(), name='crear_calificacion'),
     path('informes-rendimiento/', views.informes_rendimiento, name='informes_rendimiento'), 
     path('editar-calificacion/<int:pk>/', views.editar_calificacion, name='editar_calificacion'),

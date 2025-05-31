@@ -12,15 +12,7 @@
         <a href="{% url 'crear_calificacion' %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Nueva Calificación</a>
     </div>
 
-    <!-- Botones de exportación -->
-    {% if request.GET.asignatura %}
-    <a href="{% url 'exportar_pdf_grupal' asignatura_id=request.GET.asignatura %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
-        <i class="fas fa-file-pdf mr-2"></i>Exportar PDF
-    </a>
-    <a href="{% url 'exportar_excel_grupal' asignatura_id=request.GET.asignatura %}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
-        <i class="fas fa-file-excel mr-2"></i>Exportar Excel
-    </a>
-    {% endif %}
+    <!-- Botones de exportación eliminados -->
 
     <!-- Filtros -->
     <form method="get" class="flex flex-wrap gap-4 items-center mb-6">

@@ -19,8 +19,12 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, username, password=None, **extra_fields):
-        extra_fields.setdefault('rol', 'admin')
-        return self.create_user(username, password, **extra_fields)
+        rol = extra_fields.pop('rol', 'admin')  # Elimina 'rol' de extra_fields si existe
+        user = self.create_user(username, password, rol=rol, **extra_fields)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
 
 class User(AbstractUser):
     ROLES = [('admin', 'Administrador'), ('profesor', 'Profesor'), ('estudiante', 'Estudiante')]
@@ -67,6 +71,13 @@ class Periodo(models.Model):
 
 # Professor Model
 class Profesor(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.user.get_full_name() or self.user.username
+
+# Admin Model
+class Administrador(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
