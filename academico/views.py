@@ -58,23 +58,14 @@ def configurar_seguridad(request):
                 user.respuesta_seguridad = form.cleaned_data['respuesta_seguridad']
                 user.primer_inicio_sesion = False
                 user.save()
-                return JsonResponse({
-                    'status': 'success',
-                    'message': 'Configuración guardada correctamente',
-                    'redirect_url': redirect_to_dashboard(user).url
-                })
+                return redirect_to_dashboard(user)
             except Exception as e:
-                return JsonResponse({'status': 'error', 'message': f'Error al guardar: {str(e)}'})
-        else:
-            errores = {campo: errores[0] for campo, errores in form.errors.items()}
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Por favor verifica los datos ingresados',
-                'errors': errores
-            })
+                from django.contrib import messages
+                messages.error(request, f'Error al guardar: {str(e)}')
+        # Si el formulario no es válido, se recarga el template mostrando los errores
     else:
         form = SecurityConfigForm()
-    return render(request, 'academico/configurar_seguridad.html', {'form': form})
+    return render(request, 'configurar_seguridad.html', {'form': form})
 
 def redirect_to_dashboard(user):
     """
